@@ -1,55 +1,74 @@
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.ArrayList;
 
 public class FastCollinearPoints {
    
-   private Point[] pts;
+   private Point[] sortPts;
    private LineSegment[] lineSegs;
    public FastCollinearPoints(Point[] points) {
        // finds all line segments containing 4 or more points
        if (points == null) throw new IllegalArgumentException();
-       pts = new Point[points.length];
+       sortPts = new Point[points.length];
      
-       for (int i = 0; i < points.length-1; i++) {
-           if (points[i] == null) throw new IllegalArgumentException();
-           pts[i] = points[i];
+       if (points[0] == null) throw new IllegalArgumentException();
+       for (int i = 0; i < points.length; i++) {
+           sortPts[i] = points[i];
            for (int j = i+1; j < points.length; j++) {
+               if (i == 0 && points[j] == null) throw new IllegalArgumentException();
                if (points[i].compareTo(points[j]) == 0) throw new IllegalArgumentException();
            }
        }
        
+       Arrays.sort(sortPts, new NaturalOrder());
        ArrayList<LineSegment> lst = new ArrayList<LineSegment>();
-       for (int i = 0; i < pts.length; i++) {
-           Arrays.sort(points, pts[i].slopeOrder());
+       Point[] pts;
+       for (int i = 0; i < points.length; i++) {
+           pts = sortPts.clone();
+           Arrays.sort(pts, sortPts[i].slopeOrder());
+           
            double slopeToPoint = Double.NEGATIVE_INFINITY;
-           Point minP = points[0];
-           Point maxP = points[0];
+           Point minP = pts[0];
+           Point maxP = pts[0];
            int count = 0;
            for (int j = 1; j < pts.length; j++) {
-               double slope = points[0].slopeTo(points[j]);
-               if (slope != slopeToPoint || j == pts.length-1) {
-                   slopeToPoint = slope;
-                   if (count > 2) {
-                       LineSegment l = new LineSegment(minP, maxP);
-                       for (int k = 0; k < lst.size(); k++) {
-                           if (lst.get(k).toString().equals(l.toString())) break;
-                           if (k == lst.size() - 1) lst.add(l);
-                       }
-                   }
-                   count = 0;
-                   minP = points[0];
-                   maxP = points[0];
-               } else {
+               double slope = sortPts[i].slopeTo(pts[j]);
+               if (slope == slopeToPoint) {
                    count++;
-                   if (points[j].compareTo(minP) < 0) minP = points[j];
-                   if (points[j].compareTo(maxP) > 0) maxP = points[j];
+                   if (j == pts.length - 1 && count > 2) {
+                       maxP = maxPoint(pts[0], pts[j]);
+                       if (pts[0] == minP) lst.add(new LineSegment(minP, maxP));
+                   }
+               } else {
+                   maxP = maxPoint(pts[0], pts[j-1]);
+                   if (count > 2) {
+                       if (pts[0] == minP) lst.add(new LineSegment(minP, maxP));
+                   }
+                   count = 1;
+                   slopeToPoint = slope;
+                   minP = minPoint(pts[0], pts[j]);
                }
-               
            }
        }
        lineSegs = new LineSegment[lst.size()];
        for (int i = 0; i < lineSegs.length; i++) {
            lineSegs[i] = lst.get(i);
+       }
+   }
+   
+   private Point maxPoint(Point i, Point j) {
+       if (i.compareTo(j) > 0) return i;
+       else return j;
+   }
+
+   private Point minPoint(Point i, Point j) {
+       if (i.compareTo(j) < 0) return i;
+       else return j;
+   }
+   
+   private class NaturalOrder implements Comparator<Point> {
+       public int compare(Point o1, Point o2) {
+           return o1.compareTo(o2);
        }
    }
    public int numberOfSegments() {
@@ -58,6 +77,7 @@ public class FastCollinearPoints {
    }
    public LineSegment[] segments() {
        // the line segments
-       return lineSegs;
+       return lineSegs.clone();
    }
+  
 }

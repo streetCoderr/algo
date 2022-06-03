@@ -5,9 +5,10 @@ public class BruteCollinearPoints {
    public BruteCollinearPoints(Point[] points) {
        // finds all line segments containing 4 points
        if (points == null) throw new IllegalArgumentException();
-       for (int i = 0; i < points.length-1; i++) {
-           if (points[i] == null) throw new IllegalArgumentException();
+       if (points[0] == null) throw new IllegalArgumentException();
+       for (int i = 0; i < points.length; i++) {
            for (int j = i+1; j < points.length; j++) {
+               if (i == 0 && points[j] == null) throw new IllegalArgumentException();
                if (points[i].compareTo(points[j]) == 0) throw new IllegalArgumentException();
            }
        }
@@ -18,7 +19,6 @@ public class BruteCollinearPoints {
                    for (int l = k+1; l < points.length; l++) {
                        double lSlope = points[i].slopeTo(points[l]);
                        if (points[i].slopeTo(points[j]) == lSlope && points[i].slopeTo(points[k]) == lSlope) {
-                           int min = 0, max = 0;
                            Point minP = points[i], maxP = points[i];
                            Point[] otherPoints = new Point[] { points[j], points[k], points[l] };
                            for (int x = 0; x < otherPoints.length; x++) {
@@ -45,6 +45,6 @@ public class BruteCollinearPoints {
    }
    public LineSegment[] segments() {
        // the line segments
-       return ls;
+       return ls.clone();
    }
 }
